@@ -1,6 +1,7 @@
 gem 'active_link_to'
 gem 'anyway_config'
-gem 'bootstrap', '~> 5.1.3'
+gem 'bootstrap', '~> 5.2'
+gem 'autoprefixer-rails'
 gem 'semver2', github: 'haf/semver'
 gem 'slim-rails'
 gem 'sassc-rails'
@@ -16,6 +17,10 @@ gem 'administrate', '~> 0.19.0'
 gem 'administrate-field-jsonb', '~> 0.4.6'
 gem 'bugsnag'
 gem 'non-digest-assets'
+gem 'sidekiq'
+gem 'sidekiq-cron'
+gem 'sidekiq-failures'
+gem 'sidekiq-reset_statistics'
 
 gem_group :development do
   gem 'bcrypt_pbkdf'
@@ -47,5 +52,101 @@ end
 
 
 gem_group :development, :test do
-
+  gem 'brakeman', require: false
+  gem 'bundler-audit', require: false
+  gem 'pry-byebug'
+  gem 'pry-rails'
+  gem 'rubocop', require: false
+  gem 'rubocop-performance'
+  gem 'rubocop-capybara'
+  gem 'rubocop-rails', require: false
 end
+
+# Rubocop
+#
+file '.rubocop.yml', <<-CODE
+require:
+  - rubocop-rails
+  - rubocop-performance
+
+AllCops:
+  Exclude:
+    - node_modules/**/*
+    - db/**
+    - db/migrate/**
+    - bin/**
+    - vendor/**/*
+
+Layout/LineLength:
+  Max: 120
+
+Metrics/BlockLength:
+  Exclude:
+    - config/**/*
+
+Style/Documentation:
+  Enabled: false
+CODE
+
+after_bundle do
+  generate('simple_form:install', '--bootstrap')
+  generate('anyway:install')
+  # rails_command('importmap:install')
+  run 'bundle exec rubocop --auto-gen-config'
+  # run 'bundle exec rubocop --safe-auto-correct'
+
+  # Bootstrap & Popper
+  ########################################
+  append_file "config/importmap.rb", <<~RUBY
+    pin "bootstrap", to: "bootstrap.min.js", preload: true
+    pin "@popperjs/core", to: "popper.js", preload: true
+  RUBY
+
+  append_file "config/initializers/assets.rb", <<~RUBY
+    Rails.application.config.assets.precompile += %w(bootstrap.min.js popper.js)
+  RUBY
+
+  append_file "app/javascript/application.js", <<~JS
+    import "@popperjs/core"
+    import "bootstrap"
+  JS
+
+  append_file "app/assets/config/manifest.js", <<~JS
+    //= link popper.js
+    //= link bootstrap.min.js
+  JS
+
+  git :init
+  git add: "."
+  git commit: %Q{ -m 'Initial commit' }
+end
+
+# Gitignore
+########################################
+append_file ".gitignore", <<~TXT
+
+  # Ignore .env file containing credentials.
+  .env*
+
+  # Ignore Mac and Linux file system files
+  *.swp
+  .DS_Store
+TXT
+
+# Generators
+########################################
+generators = <<~RUBY
+  config.generators do |generate|
+    generate.assets false
+    generate.helper false
+    generate.test_framework :test_unit, fixture: false
+  end
+
+RUBY
+
+environment generators
+
+# Dotenv
+########################################
+run "touch '.env'"
+
