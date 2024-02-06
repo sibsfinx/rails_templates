@@ -100,6 +100,7 @@ end
 after_bundle do
   generate('simple_form:install', '--bootstrap')
   generate('anyway:install')
+  generate('administrate:install')
 
   run 'bundle exec rubocop --auto-gen-config'
   # run 'bundle exec rubocop --safe-auto-correct'
@@ -125,6 +126,10 @@ after_bundle do
   append_file "app/assets/config/manifest.js", <<~JS
     //= link popper.js
     //= link bootstrap.min.js
+    //= link administrate/application.css
+    //= link administrate/application.js
+    //= link administrate-field-jsonb/application.css
+    //= link administrate-field-jsonb/application.js
   JS
 
 
@@ -157,8 +162,8 @@ generators = <<~RUBY
     generate.assets false
     generate.helper false
     generate.test_framework :test_unit, fixture: false
+    generatr.jbuilder false
   end
-
 RUBY
 
 environment generators
@@ -170,6 +175,8 @@ run "touch '.envrc'"
 
 # Clone files
 run 'rm app/views/layouts/application.html.erb'
+run 'rm app/assets/stylesheets/application.css'
 
 run 'git clone git@github.com:dapi/rails_templates.git ./tmp/rails_templates'
 run 'cp -vr ./tmp/rails_templates/app/* ./app/'
+run 'cp -vr ./tmp/rails_templates/config/* ./config/'
