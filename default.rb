@@ -88,12 +88,23 @@ Style/Documentation:
   Enabled: false
 CODE
 
+inject_into_file 'config/environments/development.rb', after: 'Rails.application.configure do' do
+  <<~RUBY
+
+    config.hosts << ENV.fetch('RAILS_DEVELOPMENT_HOST', 'localhost')
+    config.web_console.whiny_requests = false
+
+  RUBY
+end
+
 after_bundle do
   generate('simple_form:install', '--bootstrap')
   generate('anyway:install')
-  # rails_command('importmap:install')
+
   run 'bundle exec rubocop --auto-gen-config'
   # run 'bundle exec rubocop --safe-auto-correct'
+
+  run 'bundle exec semver init'
 
   # Bootstrap & Popper
   ########################################
@@ -116,6 +127,12 @@ after_bundle do
     //= link bootstrap.min.js
   JS
 
+
+  # Create database
+  rails_command 'db:create'
+
+  # Commit to git
+  #
   git :init
   git add: "."
   git commit: %Q{ -m 'Initial commit' }
@@ -148,5 +165,11 @@ environment generators
 
 # Dotenv
 ########################################
-run "touch '.env'"
+run "touch '.envrc'"
 
+
+# Clone files
+run 'rm app/views/layouts/application.html.erb'
+
+run 'git clone git@github.com:dapi/rails_templates.git ./tmp/rails_templates'
+run 'cp -vr ./tmp/rails_templates/app/* ./app/'
