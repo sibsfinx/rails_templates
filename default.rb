@@ -97,6 +97,13 @@ inject_into_file 'config/environments/development.rb', after: 'Rails.application
   RUBY
 end
 
+inject_into_file 'config/application.rb', after: 'require_relative "boot"' do
+  <<~RUBY
+
+  ENV['RANSACK_FORM_BUILDER'] = '::SimpleForm::FormBuilder'
+  RUBY
+end
+
 after_bundle do
   generate('simple_form:install', '--bootstrap')
   generate('anyway:install')
@@ -180,3 +187,4 @@ run 'rm app/assets/stylesheets/application.css'
 run 'git clone git@github.com:dapi/rails_templates.git ./tmp/rails_templates'
 run 'cp -vr ./tmp/rails_templates/app/* ./app/'
 run 'cp -vr ./tmp/rails_templates/config/* ./config/'
+run 'cp -vr ./tmp/rails_templates/lib/* ./lib/'
