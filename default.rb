@@ -131,6 +131,13 @@ after_bundle do
   JS
 
   append_file "app/assets/config/manifest.js", <<~JS
+    //= link_tree ../images
+    //= link_tree ../../../vendor/javascript .js
+    //= link_tree ../builds
+    //= link application.css
+    //= link application.js
+    //= link controllers/application.js
+    //= link controllers/index.js
     //= link popper.js
     //= link bootstrap.min.js
     //= link administrate/application.css
@@ -139,6 +146,39 @@ after_bundle do
     //= link administrate-field-jsonb/application.js
   JS
 
+  # Create JavaScript controllers directory and files
+  ########################################
+  run 'mkdir -p app/javascript/controllers'
+  file 'app/javascript/controllers/application.js', <<~JS
+    import { Application } from "@hotwired/stimulus"
+
+    const application = Application.start()
+
+    // Configure Stimulus development experience
+    application.debug = false
+    window.Stimulus   = application
+
+    export { application }
+  JS
+
+  file 'app/javascript/controllers/index.js', <<~JS
+    // Import and register all your controllers from the importmap under controllers/*
+
+    import { application } from "controllers/application"
+
+    // Eager load all controllers defined in the import map under controllers/**/*_controller
+    import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
+    eagerLoadControllersFrom("controllers", application)
+  JS
+
+  # Create config.ru if it doesn't exist
+  ########################################
+  file 'config.ru', <<~RUBY
+    # This file is used by Rack-based servers to start the application.
+    require_relative "config/environment"
+    run Rails.application
+    Rails.application.load_server
+  RUBY
 
   # Create database
   rails_command 'db:create'
