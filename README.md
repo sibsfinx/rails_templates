@@ -5,10 +5,10 @@
 
 ```
 ./bin/rails app:template \
-  LOCATION=https://raw.githubusercontent.com/dapi/rails_templates/main/default.rb
+  LOCATION=https://raw.githubusercontent.com/sibsfinx/rails_templates/main/default.rb
 ```
 
 ```
 rails new AppName \
-  -m https://raw.githubusercontent.com/dapi/rails_templates/main/default.rb
+  -m https://raw.githubusercontent.com/sibsfinx/rails_templates/main/default.rb
 ```
